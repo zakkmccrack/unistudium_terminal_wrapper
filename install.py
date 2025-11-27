@@ -9,7 +9,7 @@ def install(package):
     subprocess.check_call(["yay", "-S", "--noconfirm", package])
 
 
-deps = ["python-bs4", "python-requests", "python-playwright"]
+deps = ["python-bs4", "python-requests", "python-playwright", "python-tqdm"]
 
 for d in deps:
     print("Installing {d}...")

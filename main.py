@@ -1,6 +1,8 @@
 from playwright.sync_api import sync_playwright, Playwright
 import requests
 from bs4 import BeautifulSoup
+import os
+from tqdm import tqdm
 
 
 def run(playwright: Playwright):
@@ -15,9 +17,6 @@ def run(playwright: Playwright):
         ],
     )
     page = context.new_page()
-    ## TODO: Far si che non si crei la pagina iniziale blank
-    ## IDEA: -non usare persistent_context?? (dopo potrebbe non tenere i cookie però...)
-    ##
     context.clear_cookies()
     page.goto("https://unistudium.unipg.it/unistudium/local/login/index.php")
     page.wait_for_url("https://unistudium.unipg.it/unistudium/")
@@ -72,6 +71,14 @@ def course(cookie: dict, url):
 
     values = input("Selezione [SEZIONE]-[ATTIVITA'] -> ").split("-")
     print(sections[int(values[0])]["attività"][int(values[1])]["url"])
+    remoteUrl = sections[int(values[0])]["attività"][int(values[1])]["url"]
+    print(remoteUrl)
+    localPath = "downloaded.pdf"  # os.getcwd()
+    response = requests.get(remoteUrl, cookies=cookies, stream=True)
+    with open(localPath, "wb") as file:
+        for chunk in tqdm(response.iter_content(chunk_size=1024), unit="KB"):
+            file.write(chunk)
+    print(response.text)
 
 
 with sync_playwright() as playwright:
