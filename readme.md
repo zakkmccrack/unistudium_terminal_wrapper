@@ -10,7 +10,7 @@ In più:
 
 Quindi ho voluto fare questo programma che runna tranquillamente su un qualsiasi terminale Linux per poter usare Unistudium senza interfaccia web.
 
-
+**Nota**: Lo script è configurato per Arch Linux (`yay`). Per altre distribuzioni, modifica `install.py` sostituendo `yay -S --noconfirm` con il tuo package manager: `apt install -y` (Debian/Ubuntu), `dnf install -y` (Fedora), o `pacman -S --noconfirm` (Arch vanilla), e adatta i nomi dei pacchetti (es: `python3-bs4` invece di `python-bs4`).
 ## Descrizione
 
 Questo progetto permette di navigare attraverso i corsi disponibili su Unistudium e scaricare facilmente i file delle attività didattiche. Utilizza Playwright per l'autenticazione automatica tramite browser e requests per il download dei file.
