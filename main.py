@@ -5,8 +5,7 @@ from tqdm import tqdm
 from pathlib import Path
 import re
 from typing import Optional, Dict, List, Tuple
-
-
+import time
 class UniStudiumDownloader:
     """Classe per gestire il download di materiali da UniStudium"""
     
@@ -23,10 +22,10 @@ class UniStudiumDownloader:
         """Ottiene il cookie di sessione tramite autenticazione browser"""
         browsers = [
             ("Brave", playwright.chromium, "/usr/bin/brave"),
-            ("Chromium", playwright.chromium, None),
             ("Firefox", playwright.firefox, None),
-            ("WebKit", playwright.webkit, None),
             ("Opera", playwright.chromium, "/usr/bin/opera"),
+            ("Chromium", playwright.chromium, None),
+            ("WebKit", playwright.webkit, None),
         ]
 
         context = None
@@ -52,20 +51,34 @@ class UniStudiumDownloader:
         page = context.new_page()
         print("Effettua il login su UniStudium...")
         page.goto(self.LOGIN_URL)
-        page.wait_for_url(self.BASE_URL, timeout=120000)  # 2 minuti per il login
         
+        timeout = 120  # secondi
+        start = time.time()
+
+        moodle_cookie = None
+        cookies = context.cookies()
         moodle_cookie = next(
-            (c for c in context.cookies() if c["name"] == self.COOKIE_NAME),
+            (c for c in cookies if c["name"] == self.COOKIE_NAME),
             None,
         )
+        current_moodle_cookie = None
+        while time.time() - start < timeout:
+            cookies = context.cookies()
+            current_moodle_cookie = next(
+                (c for c in cookies if c["name"] == self.COOKIE_NAME),
+                None,
+            )
+            if moodle_cookie != current_moodle_cookie:
+                print(current_moodle_cookie)
+                break
+            time.sleep(0.2)
+        if not current_moodle_cookie:
+            raise TimeoutError("Cookie di login non trovato entro il timeout")
         
         page.close()
         context.close()
         
-        if not moodle_cookie:
-            raise RuntimeError("Cookie di sessione non trovato!")
-            
-        return moodle_cookie["value"]
+        return current_moodle_cookie["value"]
     
     def get_cookies_dict(self) -> Dict[str, str]:
         """Restituisce il dizionario dei cookie per le richieste"""
@@ -241,16 +254,13 @@ class UniStudiumDownloader:
         
         while True:
             try:
-                # Mostra corsi
-                courses = self.fetch_courses()
+                courses = self.fetch_courses()      
                 if not courses:
                     print("❌ Nessun corso trovato")
                     break
-                
                 course_idx = self.display_courses(courses)
                 if course_idx == -1:
                     break
-                
                 course_name, course_url = courses[course_idx]
                 print(f"\n📚 Corso selezionato: {course_name}")
                 
@@ -274,7 +284,6 @@ class UniStudiumDownloader:
                     continue_choice = input("\n🔄 Scaricare altro da questo corso? (s/n): ").strip().lower()
                     if continue_choice != 's':
                         break
-                        
             except KeyboardInterrupt:
                 print("\n\n⚠️ Interruzione da tastiera")
                 break
